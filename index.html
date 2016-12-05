@@ -30,7 +30,7 @@ button {
 </div>
 
 <script>
-chart("data.csv", "orange");
+chart("mydata2.csv", "orange");
 var datearray = [];
 var colorrange = [];
 function chart(csvpath, color) {
@@ -43,11 +43,12 @@ else if (color == "pink") {
 else if (color == "orange") {
   colorrange = ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"];
 }
+colorrange = d3.scale.category20();
 strokecolor = colorrange[0];
-var format = d3.time.format("%m/%d/%y");
+var format = d3.time.format("%Y");
 var margin = {top: 20, right: 40, bottom: 30, left: 30};
 var width = document.body.clientWidth - margin.left - margin.right;
-var height = 400 - margin.top - margin.bottom;
+var height = 600 - margin.top - margin.bottom;
 var tooltip = d3.select("body")
     .append("div")
     .attr("class", "remove")
@@ -60,12 +61,11 @@ var x = d3.time.scale()
     .range([0, width]);
 var y = d3.scale.linear()
     .range([height-10, 0]);
-var z = d3.scale.ordinal()
-    .range(colorrange);
+var z = d3.scale.category20();
 var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom")
-    .ticks(d3.time.weeks);
+    .ticks(d3.time.years);
 var yAxis = d3.svg.axis()
     .scale(y);
 var yAxisr = d3.svg.axis()
@@ -78,7 +78,7 @@ var stack = d3.layout.stack()
 var nest = d3.nest()
     .key(function(d) { return d.key; });
 var area = d3.svg.area()
-    .interpolate("cardinal")
+    .interpolate("basis")
     .x(function(d) { return x(d.date); })
     .y0(function(d) { return y(d.y0); })
     .y1(function(d) { return y(d.y0 + d.y); });
@@ -118,25 +118,26 @@ var graph = d3.csv(csvpath, function(data) {
       svg.selectAll(".layer").transition()
       .duration(250)
       .attr("opacity", function(d, j) {
-        return j != i ? 0.6 : 1;
+        return j != i ? 0.4 : 1;
     })})
     .on("mousemove", function(d, i) {
       mousex = d3.mouse(this);
       mousex = mousex[0];
       var invertedx = x.invert(mousex);
-      invertedx = invertedx.getMonth() + invertedx.getDate();
+      invertedx = invertedx.getYear();
+      // console.log(invertedx);
       var selected = (d.values);
-      for (var k = 0; k < selected.length; k++) {
-        datearray[k] = selected[k].date
-        datearray[k] = datearray[k].getMonth() + datearray[k].getDate();
-      }
-      mousedate = datearray.indexOf(invertedx);
-      pro = d.values[mousedate].value;
+      // for (var k = 0; k < selected.length; k++) {
+      //   datearray[k] = selected[k].date
+      //   datearray[k] = datearray[k].getYear();
+      // }
+
+      dd = d.values[invertedx-91];
       d3.select(this)
       .classed("hover", true)
       .attr("stroke", strokecolor)
       .attr("stroke-width", "0.5px"),
-      tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "visible");
+      tooltip.html( "<p>" + d.key + "<br>" + dd.value + "<br>" + (dd.date.getYear()+1900) + "</p>" ).style("visibility", "visible");
 
     })
     .on("mouseout", function(d, i) {
@@ -146,7 +147,9 @@ var graph = d3.csv(csvpath, function(data) {
       .attr("opacity", "1");
       d3.select(this)
       .classed("hover", false)
-      .attr("stroke-width", "0px"), tooltip.html( "<p>" + d.key + "<br>" + pro + "</p>" ).style("visibility", "hidden");
+      .attr("stroke-width", "0px"),
+      tooltip.html( "<p>" + d.key + "<br>" + dd.value + "<br>" + (dd.date.getYear()+1900) + "</p>" ).style("visibility", "hidden");
+
   })
 
   var vertical = d3.select(".chart")
@@ -155,7 +158,7 @@ var graph = d3.csv(csvpath, function(data) {
         .style("position", "absolute")
         .style("z-index", "19")
         .style("width", "1px")
-        .style("height", "380px")
+        .style("height", height+"px")
         .style("top", "10px")
         .style("bottom", "30px")
         .style("left", "0px")
