@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+
+
+</style>
+<svg width="1000" height="200"></svg>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="colorbrewer.min.js"></script>
+<script>
+var unitWidth = 18;
+var unitMargin = 2;
+var svg = d3.select("svg"),
+    margin = {top: 20, right: 80, bottom: 30, left: 50},
+    width = svg.attr("width") - margin.left - margin.right,
+    height = svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("mySum.csv", function(data) {
+  values = [];
+  data.forEach(function(d) {
+    values.push(parseInt(d.value));
+  });
+  var scale = d3.scaleLinear().domain(d3.extent(values)).range([0.2,1]);
+
+  var legend = g.selectAll(".timeunit")
+     .data(data)
+   .enter().append("g")
+     .attr("class", "timeunit")
+     .attr("transform", function(d, i) { return "translate(" + i * (unitWidth + unitMargin)+",0)"; });
+
+  legend.append("rect")
+      .attr("x", 0)
+      .attr("width", unitWidth)
+      .attr("height", unitWidth)
+      .style("fill", "green")
+      .attr("opacity", function(d) {
+        return scale(d.value);
+      });
+
+  legend.append("text")
+      .attr("x", 0)
+      .attr("y", unitWidth+unitMargin)
+      .attr("dy", ".35em")
+      .style("alignment-baseline", "text-before-edge")
+      .text(function(d,i) { if (i%5==0 || i==values.length-1) return d.date;})
+
+});
+
+</script>
