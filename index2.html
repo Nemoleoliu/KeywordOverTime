@@ -30,7 +30,6 @@ var x = d3.scaleTime().range([0, width]),
     z = d3.scaleOrdinal(d3.schemeCategory20);
 
 var line = d3.line()
-    .curve(d3.curveBasis)
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.value); });
 

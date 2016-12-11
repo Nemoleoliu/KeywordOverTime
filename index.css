@@ -1,0 +1,69 @@
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar {
+  float: left;
+  height: 100%;
+  width: 250px;
+  background-color: #dddddd;
+}
+
+.content {
+  height: 100%;
+  width: 100%;
+  padding-left: 250px;
+  /*background-color: #eeeeee;*/
+}
+
+.main {
+  padding-bottom: 180px;
+  height: 100%;
+  width: 100%;
+  /*background-color: #ff0000;*/
+}
+
+.bottom {
+  position: relative;
+  width:100%;
+  bottom: 180px;
+  height: 180px;
+  /*background-color: #cccccc;*/
+}
+
+/*navigation view*/
+
+#navigation-view {
+  width: 100%;
+  height: 100%;
+}
+
+/*line view*/
+
+#line-view {
+  width: 100%;
+  height: 100%;
+}
+
+.axis--x path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
