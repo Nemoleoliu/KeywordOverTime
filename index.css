@@ -45,6 +45,19 @@ body {
 }
 
 /*navigation view*/
+.axis--grid .domain {
+  fill: #ddd;
+  stroke: none;
+}
+
+.axis--x .domain,
+.axis--grid .tick line {
+  stroke: #fff;
+}
+
+.axis--grid .tick--minor line {
+  stroke-opacity: .5;
+}
 
 #navigation-view {
   width: 100%;
@@ -63,7 +76,33 @@ body {
 }
 
 .line {
+  transition-property: opacity, stroke-width;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
   fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
+  stroke-width: 2px;
 }
+
+.line-dim {
+  transition-property: opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
+  opacity: 0.2;
+}
+
+.line-highlight {
+  transition-property: opacity, stroke-width;
+  transition-duration: 0.2s, 0.1s;
+  transition-timing-function: ease-out;
+  opacity: 1;
+  stroke-width: 6px;
+}
+
+/*.line-selection {
+  opacity: 0.2;
+}
+
+.line-selected {
+  opacity: 1;
+  stroke-width: 4px;
+}*/
