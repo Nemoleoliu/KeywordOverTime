@@ -36,8 +36,6 @@ class KeywordData {
   }
   get subrange() { return this._subrange; }
 
-
-
 }
 
 class NavigationView {
@@ -74,12 +72,17 @@ class NavigationView {
     return this._brushDidRefresh;
   }
 
-  setData(daterange) {
+  bindData(kwd) {
+    this.kwd = kwd;
+    this.update();
+  }
+
+  update() {
     this.x = d3.scaleTime()
-      .domain(daterange.map(function(d) { return new Date(d); }))
+      .domain(this.kwd.timerange.map(function(d) { return new Date(d); }))
       .rangeRound([0, this.width]);
     this.x.ticks(d3.timeYear.every(1));
-    this.x.nice();
+    // this.x.nice();
 
     this.svg.append("g")
     .attr("class", "axis axis--grid")
@@ -154,19 +157,9 @@ class LineView {
     };
   }
 
-  set dateRange(value) {
-    this._dateRange = value;
-    this.renderAxis();
-    this.renderLineView();
-  }
-
-  get dateRange() {
-    return this._dateRange;
-  }
-
   renderLineView() {
     const self = this;
-    const kwData = self.g.selectAll("g.keyword").data(self._data);
+    const kwData = self.g.selectAll("g.keyword").data(self.kwd.kw_date);
 
     // enter
     const kwDataEnter = kwData.enter().append("g").attr("class", "keyword");
@@ -230,11 +223,15 @@ class LineView {
   renderAxis() {
     const self = this;
     // set x-date range
-    self.x.domain(self._dateRange);
+    if (self.kwd.subrange) {
+      self.x.domain(self.kwd.subrange);
+    } else {
+      self.x.domain(self.kwd.timerange);
+    }
     // set y-count range
     self.y.domain([
-      d3.min(self._data, function(c) { return d3.min(c.values, function(d) { return d.value; }); }),
-      d3.max(self._data, function(c) { return d3.max(c.values, function(d) { return d.value; }); })
+      d3.min(self.kwd.kw_date, function(c) { return d3.min(c.values, function(d) { return d.value; }); }),
+      d3.max(self.kwd.kw_date, function(c) { return d3.max(c.values, function(d) { return d.value; }); })
     ]);
     // render Axis x
     self.g.selectAll('.axis').remove();
@@ -254,37 +251,16 @@ class LineView {
       .text("Count");
   }
 
-  // loadData(data) {
-  //   const self = this;
-  //   // data preprocess
-  //   self._data = [];
-  //   // var keywords = [];
-  //   var keywordIndex = {};
-  //   var dates = [];
-  //   data.forEach(function(d) {
-  //     if (!(d.key in keywordIndex)) {
-  //       self._data.push({
-  //         key: d.key,
-  //         values: [],
-  //       });
-  //       keywordIndex[d.key] = self._data.length-1;
-  //     }
-  //     self._data[self._data.length-1].values.push({
-  //       date: self.parseTime(d.date),
-  //       value: parseInt(d.value),
-  //     });
-  //     dates.push(self.parseTime(d.date));
-  //   });
-  // }
+  bindData(kwd) {
+    this.kwd = kwd;
+    this.update();
+  }
 
-  setData(data, dateRange) {
+  update() {
     const self = this;
-    // self.loadData(data);
-    self._data = data;
-    self._dateRange = dateRange;
     // set color scale
     // TODO: pass from outside
-    self.colorScale.domain(self._data.map(function(d, i) { return i}));
+    self.colorScale.domain(self.kwd.keywords);
     self.renderAxis();
     // render Line view
     self.renderLineView();
@@ -306,15 +282,18 @@ d3.selection.prototype.moveToBack = function() {
         }
     });
 };
+
+
 const navView = new NavigationView('navigation-view');
 const lineView = new LineView('line-view');
 let flag = false;
 d3.json('data.json', function(data) {
   const kwd = new KeywordData(data);
+  lineView.bindData(kwd);
+  navView.bindData(kwd);
   kwd.subrangeDidUpdate = function() {
-    lineView.setData(kwd.kw_date, kwd.subrange);
+    lineView.update();
   };
-  navView.setData(kwd.timerange);
   navView.brushDidRefresh = function(d) {
     kwd.subrange = d;
   };
