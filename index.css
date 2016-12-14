@@ -15,18 +15,12 @@ body {
   margin: 0;
 }
 
-.sidebar {
-  float: left;
+.sidebar-right, .sidebar-left, .content{
   height: 100%;
-  width: 250px;
-  background-color: #dddddd;
 }
 
-.content {
-  height: 100%;
-  width: 100%;
-  padding-left: 250px;
-  /*background-color: #eeeeee;*/
+.sidebar-left, .sidebar-right {
+  background-color: #dddddd;
 }
 
 .main {
@@ -80,7 +74,7 @@ body {
   transition-duration: 0.2s;
   transition-timing-function: ease;
   fill: none;
-  stroke-width: 2px;
+  stroke-width: 1.5px;
 }
 
 .line-dim {
@@ -95,7 +89,7 @@ body {
   transition-duration: 0.2s, 0.1s;
   transition-timing-function: ease-out;
   opacity: 1;
-  stroke-width: 6px;
+  stroke-width: 4px;
 }
 
 /*.line-selection {
