@@ -8,11 +8,14 @@ body {
   padding: 0;
 }
 
+.clear {
+  margin: 0;
+  padding: 0;
+}
+
 .container {
   height: 100%;
   width: 100%;
-  padding: 0;
-  margin: 0;
 }
 
 .sidebar-right, .sidebar-left, .content{
@@ -61,6 +64,11 @@ body {
 /*line view*/
 
 #line-view {
+  width: 100%;
+  height: 100%;
+}
+
+#keywords-view {
   width: 100%;
   height: 100%;
 }
