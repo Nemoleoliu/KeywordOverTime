@@ -221,6 +221,7 @@ class LineView {
     this.gLine = this.g.append("g").attr('class', 'gLine').attr("clip-path", "url(#clip)");
     d3.select(window).on("mousemove", mousemove);
     this.x = d3.scaleTime().range([0, this.width]),
+    this.axis_x = d3.axisBottom(self.x).tickArguments([d3.timeYear.every(1)]);
     this.y = d3.scaleLinear().range([this.height, 0]),
     this.cursor = this.gCursor.append('rect')
       .attr('width', 2)
@@ -298,7 +299,7 @@ class LineView {
     self.g.append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + self.height + ")")
-      .call(d3.axisBottom(self.x).tickArguments([d3.timeYear.every(1)]));
+      .call(this.axis_x);
     // render Axis y and text
     self.g.append("g")
       .attr("class", "axis axis--y")
@@ -387,6 +388,7 @@ class RankingView {
     this.gPoints = this.g.append("g").attr('class', 'gPoints').attr("clip-path", "url(#clip)");
 
     this.x = d3.scaleTime().range([0, this.width]);
+    this.x2 = d3.scaleBand().range([0, this.width]);
     this.y = d3.scalePoint().range([0, this.height]).padding(0.5);
 
     this.line = d3.line()
@@ -396,37 +398,9 @@ class RankingView {
 
   renderLineView() {
     const self = this;
-    const kwData = self.gLine.selectAll("g.keyword").data(self.kwd.kw_date_ranking);
-
-    // enter
-    const kwDataEnter = kwData.enter().append("g").attr("class", "keyword");
-    kwDataEnter.append("path").attr("class", "line");
-    // update and enter
-    kwData.merge(kwDataEnter).selectAll('path')
-      .attr("id", function(d, i) { return d.key + "_path"; })
-      .attr("d", function(d) { return self.line(d.values); })
-      .style("stroke", function(d, i) { return self.kwd.colorScale(d.key); });
-    // exit
-    kwData.exit().remove();
-  }
-
-  renderPoint() {
-    const self = this;
     const gPoint = this.gPoints.selectAll("g.gPoint").data(this.kwd.kw_date_ranking);
     const gPointEnter = gPoint.enter().append('g').attr('class', "gPoint");
     gPoint.merge(gPointEnter).each(function(c, i) {
-      // const points = d3.select(this).selectAll('.line').data(c.values);
-      // const pointsEnter = points.enter().append('line')
-      //   .attr('class', 'line')
-      //   .style('stroke', function(d, i) { return self.kwd.colorScale(c.key); })
-      //   .style('stroke-width', 2)
-      //   .attr('fill', 'none');
-      // points.merge(pointsEnter)
-      //   .attr("x1", function (d) { return self.x(d.date) - 10; })
-    	// 	.attr("y1", function (d) { return self.y(d.value); })
-    	// 	.attr("x2", function (d) { return self.x(d.date) + 10; })
-    	// 	.attr("y2", function (d) { return self.y(d.value); });
-
       d3.select(this).selectAll('path').remove();
       var lineFunc = d3.line()
     		.x(function (d) { return d.x; })
@@ -434,11 +408,11 @@ class RankingView {
       const ps = [];
       $.each(c.values, function(i, d) {
         ps.push({
-          x: self.x(d.date) - 20,
+          x: self.x(d.date) - self.x2.step()/4,
           y: self.y(d.value)
         });
         ps.push({
-          x: self.x(d.date) + 20,
+          x: self.x(d.date) + self.x2.step()/4,
           y: self.y(d.value)
         });
       });
@@ -446,7 +420,15 @@ class RankingView {
       d3.select(this).append("path")
     		.attr("d", function() { return lineFunc(ps); })
     		.attr("stroke", self.kwd.colorScale(c.key))
-    		.attr("stroke-width", 6)
+    		.attr("stroke-width", function(d) {
+          if (self.x2.step() <= 35) {
+            return 2;
+          } else if(self.x2.step() <= 60) {
+            return 3;
+          } else {
+            return 6;
+          }
+        })
     		.attr("fill", "none");
     });
     gPoint.exit().remove();
@@ -464,8 +446,10 @@ class RankingView {
     // set x-date range
     if (self.kwd.subrange) {
       self.x.domain(extend(self.kwd.subrange));
+      self.x2.domain(d3.timeYears(self.kwd.subrange[0], self.kwd.subrange[1]));
     } else {
       self.x.domain(extend(self.kwd.timerange));
+      self.x2.domain(d3.timeYears(self.kwd.timerange[0], self.kwd.timerange[1]));
     }
     // set y-count range
     self.y.domain(
@@ -477,22 +461,6 @@ class RankingView {
         }) + 1
       )
     );
-    // render Axis x
-    // self.g.selectAll('.axis').remove();
-    // self.g.append("g")
-    //   .attr("class", "axis axis--x")
-    //   .attr("transform", "translate(0," + self.height + ")")
-    //   .call(d3.axisBottom(self.x));
-    // // render Axis y and text
-    // self.g.append("g")
-    //   .attr("class", "axis axis--y")
-    //   .call(d3.axisLeft(self.y))
-    //   .append("text")
-    //   .attr("transform", "rotate(-90)")
-    //   .attr("y", 6)
-    //   .attr("dy", "0.71em")
-    //   .attr("fill", "#000")
-    //   .text("Count");
   }
 
   bindData(kwd) {
@@ -504,8 +472,7 @@ class RankingView {
     this.updateVisible();
     this.renderAxis();
     // render Line view
-    // this.renderLineView();
-    this.renderPoint();
+    this.renderLineView();
   }
 
   updateVisible() {
