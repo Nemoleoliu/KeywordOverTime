@@ -9,7 +9,7 @@ body {
 }
 
 .keyword-label {
-	font-size: 17px;
+	font-size: 14px;
 	font-style: normal;
 /*	font-family: "Comic Sans MS", cursive, sans-serif; */
 }
@@ -87,7 +87,7 @@ body {
   transition-duration: 0.2s;
   transition-timing-function: ease;
   fill: none;
-  stroke-width: 1.5px;
+  stroke-width: 2px;
 }
 
 .line-dim {
@@ -102,7 +102,7 @@ body {
   transition-duration: 0.2s, 0.1s;
   transition-timing-function: ease-out;
   opacity: 1;
-  stroke-width: 4px;
+  stroke-width: 6px;
 }
 
 /*.line-selection {
