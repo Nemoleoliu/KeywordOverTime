@@ -503,23 +503,40 @@ class KeywordsView {
     self.y.domain(self.kwd.keywords);
 
     const gKeywords = self.g.selectAll('g.gKeyword').data(this.kwd.keywords);
-    const gKeywordsEnter = gKeywords.enter()
-      .append('g').attr('class', 'gKeyword');
+    
+	const gKeywordsEnter = gKeywords.enter()
+			.append('g').attr('class', 'gKeyword');
     gKeywordsEnter.append('rect').attr('class', 'keyword-bg');
-    gKeywordsEnter.append('text').attr('class', 'keyword-label');
+    gKeywordsEnter.append('rect').attr('class', 'keyword-bar');
+	gKeywordsEnter.append('text').attr('class', 'keyword-label');
 
-    gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-bg')
+   	gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-bar')
       .attr('x', 0)
-      .attr('y', function(d) { return self.y(d); })
+      .attr('y', function(d) { return self.y(d) - self.y.step(); })
+	  .attr('rx', 10)
+	  .attr('ry', 10)
+      .attr('width', self.width/2)
+      .attr('height', self.y.step())
+      .attr('fill', function(d) { return self.kwd.colorScale(d); })
+	  .attr('opacity', 0.5);
+
+ 
+	gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-bg')
+      .attr('x', 0)
+      .attr('y', function(d) { return self.y(d) - self.y.step(); })
+	  .attr('rx', 10)
+	  .attr('ry', 10)
       .attr('width', self.width)
       .attr('height', self.y.step())
-      .attr('fill', function(d) { return self.kwd.colorScale(d); });
+      .attr('fill', function(d) { return self.kwd.colorScale(d); })
+	  .attr('opacity', 0.3);
 
     gKeywords.merge(gKeywordsEnter).selectAll('text.keyword-label')
-      .text(function(d) { return d; })
+      .text(function (d) { return d; })
       .attr('x', 4)
       .attr('y', function(d) { return self.y(d)-self.y.step()/2; })
       .attr('alignment-baseline', 'central')
+	  .attr('text-anchor', 'start')
       .attr('fill','#333333');
 
 

@@ -8,6 +8,11 @@ body {
   padding: 0;
 }
 
+.keyword-label {
+	font-size: 17px;
+	font-style: normal;
+/*	font-family: "Comic Sans MS", cursive, sans-serif; */
+}
 .clear {
   margin: 0;
   padding: 0;
@@ -23,7 +28,7 @@ body {
 }
 
 .sidebar-left, .sidebar-right {
-  background-color: #dddddd;
+ /* background-color: #dddddd; */
 }
 
 .main {
