@@ -52,7 +52,7 @@ body {
   stroke: none;
 }
 
-.axis--x .domain,
+path.brush ,
 .axis--grid .tick line {
   stroke: #fff;
 }
@@ -78,15 +78,14 @@ body {
   height: 100%;
 }
 
-.axis--x path {
-  display: none;
+.line {
+  fill: none;
 }
 
-.line {
+.main-line, .data-line {
   transition-property: opacity, stroke-width;
   transition-duration: 0.2s;
   transition-timing-function: ease;
-  fill: none;
   stroke-width: 2px;
 }
 
@@ -104,12 +103,3 @@ body {
   opacity: 1;
   stroke-width: 6px;
 }
-
-/*.line-selection {
-  opacity: 0.2;
-}
-
-.line-selected {
-  opacity: 1;
-  stroke-width: 4px;
-}*/

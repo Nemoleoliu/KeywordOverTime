@@ -6,31 +6,38 @@ class KeywordData {
     this._timerange = data.timerange;
     this._keywords = data.keywords;
     this._timeunit =  data.timeunit;
-    if (this.timeunit == 365*24*60*60*1000) {
+
+    // init time interval
+    if (this._timeunit == 'year') {
       this._time_interval = d3.timeYear;
     } else {
       this._time_interval = d3.timeInterval(
         function(date) {
           let m = date.getTime();
-          date.setTime(m - m % self.timeunit);
+          date.setTime(m - m % self._timeunit);
         },
         function(date, offset) {
           let m = date.getTime();
-          date.setTime(m + offset * self.timeunit);
+          date.setTime(m + offset * self._timeunit);
         },
         function(start, end) {
-          return (end.getTime() - start.getTime()) / self.timeunit;
+          return (end.getTime() - start.getTime()) / self._timeunit;
         }
       );
     }
-
+    // init color scale
     this._colorScale = d3.scaleOrdinal(d3.schemeCategory20).domain(this._keywords);
-    this._kw_index = {};
 
+    this._kw_index = {};
+    this._date_sum = [];
     const date_kw = {};
     this._date_kw = date_kw;
     $.each(data.data, function(i, d) {
       date_kw[d.date] = d;
+      self._date_sum.push({
+        date: d.date,
+        value: d3.sum(d.values)
+      });
     });
 
     // init kw_date
@@ -83,20 +90,6 @@ class KeywordData {
       };
       let rank = 0;
       $.each(indices, function(i, v) {
-        // if (i === 0) {
-        //   kw_date_ranking[v].values.push({
-        //     date: d.date,
-        //     value: rank,
-        //   });
-        // } else {
-        //   if (d.values[indices[i-1]] !== d.values[v]) {
-        //     rank++;
-        //   }
-        //   kw_date_ranking[v].values.push({
-        //     date: d.date,
-        //     value: rank,
-        //   });
-        // }
         kw_date_ranking[v].values.push({
           date: d.date,
           value: i,
@@ -104,8 +97,6 @@ class KeywordData {
       });
 
     });
-    // console.log(this.time_interval.count(this._timerange[0], this._timerange[1]))
-    // init timeunit
     this._highlight_kw = null;
     this.subrange = null;
   }
@@ -115,11 +106,12 @@ class KeywordData {
   get keywords() { return this._keywords; }
   get kw_index() { return this._kw_index; }
   get date_kw() { return this._date_kw; }
+  get date_sum() { return this._date_sum; }
   get kw_date() { return this._kw_date; }
   get colorScale() { return this._colorScale; }
   get kw_date_ranking() { return this._kw_date_ranking; }
   get date_kw_ranking() { return this._date_kw_ranking; }
-  get timeunit() { return this._timeunit; }
+  // get timeunit() { return this._timeunit; }
   get subrange_sum() { return this._subrange_sum; }
   get subrange_sum_ranking() { return this._subrange_sum_ranking; }
 
@@ -251,11 +243,11 @@ class CursorView {
 
 class NavigationView {
   constructor(id) {
+    const self = this;
     this.width = $('#'+id).width() - margin.left - margin.right,
     this.height = $('#'+id).height() - margin.top - margin.bottom,
     this.svg = d3.select("#"+id).append("g").attr(
       "transform", "translate(" + margin.left + "," + margin.top + ")");
-    const self = this;
     this.brushed = function() {
       if (d3.event.sourceEvent.type === "brush") return;
       let d1 = null;
@@ -280,6 +272,7 @@ class NavigationView {
         }
       }
     }
+    this.y = d3.scaleLinear().range([this.height, 0]);
   }
 
   set brushDidRefresh(value) {
@@ -301,6 +294,9 @@ class NavigationView {
       .domain(this.kwd.timerange.map(function(d) { return new Date(d); }))
       .rangeRound([0, this.width]);
     this.x.ticks(self.kwd.time_interval.every(1));
+    this.y.domain([0, d3.max(self.kwd.date_sum, function(d) {
+      return d.value;
+    })]);
 
     this.svg.append("g")
     .attr("class", "axis axis--grid")
@@ -314,14 +310,26 @@ class NavigationView {
         .attr("class", "axis axis--x")
         .attr("transform", "translate(0," + this.height + ")")
         .call(d3.axisBottom(this.x)
-            .ticks(10));
-    this.svg.append("g")
+            .ticks(10))
+        .selectAll('path.domain').classed('brush', true);
+
+    const brush = this.svg.append("g")
       .attr("class", "brush")
       .call(d3.brushX()
           .extent([[0, 0], [this.width, this.height]])
           .on("brush", this.brushed)
           .on('end', this.brushEnd)
       );
+    const line = d3.line()
+      .x(function(d) { return self.x(d.date); })
+      .y(function(d) { return self.y(d.value); });
+    brush.append("path")
+      .datum(self.kwd.date_sum)
+      .attr("class", "line")
+      .attr("d", line)
+      .attr('stroke', 'grey')
+      .attr('stroke-width', '1px');
+
   }
 }
 
@@ -380,7 +388,7 @@ class LineView {
     const kwData = self.gLine.selectAll("g.keyword").data(self.kwd.kw_date);
     // enter
     const kwDataEnter = kwData.enter().append("g").attr("class", "keyword");
-    kwDataEnter.append("path").attr("class", "line")
+    kwDataEnter.append("path").classed('line', true).classed('main-line', true)
       .on("mouseenter", function(d, i) {
         self.kwd.highlight_kw = d.key;
         d3.select(this.parentNode).moveToFront();
@@ -409,9 +417,6 @@ class LineView {
     const self = this;
     if (!self.kwd.x) {
       self.kwd.x = this.x;
-      this.axis_x = d3.axisBottom(self.kwd.x)
-      .ticks(10);
-      // .tickArguments([self.kwd.time_interval.every(1)]);
     }
 
     // set y-count range
@@ -424,7 +429,7 @@ class LineView {
     self.g.append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + self.height + ")")
-      .call(this.axis_x);
+      .call(d3.axisBottom(self.kwd.x).ticks(10));
     // render Axis y and text
     self.g.append("g")
       .attr("class", "axis axis--y")
@@ -506,8 +511,14 @@ class RankingView {
       .attr("height", this.height);
 
     this.gBg = this.g.append('g').attr('class', 'gBg').attr("clip-path", "url(#clip)");
-    this.gBg.append('rect').attr('x', 0).attr('y', 0).attr('width', this.width)
-      .attr('height', this.height).attr('fill','white');
+    this.gBg.append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', this.width)
+      .attr('height', this.height)
+      .attr('fill','white')
+      .style('pointer-events', 'none');
+
     this.gLines = this.g.append('g').attr('class', 'gLines').attr('clip-path', 'url(#clip)');
     this.gPoints = this.g.append("g").attr('class', 'gPoints').attr("clip-path", "url(#clip)");
     this.x = d3.scaleTime().range([0, this.width]);
@@ -541,7 +552,7 @@ class RankingView {
         });
       });
 
-      d3.select(this).append("path").attr('class', 'line')
+      d3.select(this).append("path").classed('line', true).classed('data-line', true)
         .classed('line-highlight', function(d) {
           return (self.kwd.highlight_kw !== null) && (self.kwd.highlight_kw === c.key);
         })
@@ -588,7 +599,8 @@ class RankingView {
           .attr('stroke', function(d) { return self.kwd.colorScale(key); })
           .attr('fill', "white")
           .attr('stroke-width', 4)
-          .attr('r', 8);
+          .attr('r', 8)
+          .style('pointer-events', 'none');
 
         const text = d3.select(this).selectAll('text.ranking')
           .data(self.kwd.kw_date_ranking[self.kwd.kw_index[key]].values);
@@ -600,7 +612,9 @@ class RankingView {
           .attr('fill', function(d) { return self.kwd.colorScale(key); })
           .attr('alignment-baseline', 'central')
     	    .attr('text-anchor', 'middle')
-          .attr('font-size','10px');
+          .attr('font-size','10px')
+          .style('pointer-events', 'none');
+
       } else {
         d3.select(this).remove();
       }
@@ -694,9 +708,11 @@ class KeywordsView {
     const gKeywords = self.g.selectAll('g.gKeyword').data(self.kwd.keywords);
 	  const gKeywordsEnter = gKeywords.enter()
 			.append('g').attr('class', 'gKeyword');
+
     gKeywordsEnter.append('rect').attr('class', 'keyword-bg');
     gKeywordsEnter.append('rect').attr('class', 'keyword-bar');
 	  gKeywordsEnter.append('text').attr('class', 'keyword-label');
+    gKeywordsEnter.append('rect').attr('class', 'keyword-action');
 
    	gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-bar')
       .attr('x', 0)
@@ -708,7 +724,18 @@ class KeywordsView {
       .attr('y', function(key) {
         return self.y(rankings[self.kwd.kw_index[key]]) - self.y.step(); })
       .attr('width', function(key) {
-        return self.x(values[self.kwd.kw_index[key]]); });
+        return self.x(values[self.kwd.kw_index[key]]); })
+      .attr('opacity', function(key) {
+        if (self.kwd.highlight_kw) {
+          if (key == self.kwd.highlight_kw) {
+            return 1.0;
+          } else {
+            return 0.2;
+          }
+        } else {
+          return 1.0;
+        }
+      });
 
     gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-bg')
       .attr('x', 0)
@@ -719,8 +746,18 @@ class KeywordsView {
       .attr('width', self.width)
       .attr('height', self.y.step())
       .attr('fill', function(key) { return self.kwd.colorScale(key); })
-	    .attr('opacity', 0.2);
+      .attr('opacity', function(key) {
+        if (self.kwd.highlight_kw) {
+          if (key == self.kwd.highlight_kw) {
+            return 0.2;
+          } else {
+            return 0.0;
+          }
+        } else {
+          return 0.2;
+        }
 
+      });
     gKeywords.merge(gKeywordsEnter).selectAll('text.keyword-label')
       .text(function (key) { return key + " " + values[self.kwd.kw_index[key]]; })
       .attr('x', 4)
@@ -728,8 +765,25 @@ class KeywordsView {
         return self.y(rankings[self.kwd.kw_index[key]]) - self.y.step()/2; })
       .attr('alignment-baseline', 'central')
 	    .attr('text-anchor', 'start')
-      .attr('fill','#333333');
+      .attr('fill','#444444');
 
+    gKeywords.merge(gKeywordsEnter).selectAll('rect.keyword-action')
+      .attr('x', 0)
+  	  // .attr('rx', r)
+  	  // .attr('ry', r)
+      .attr('height', self.y.step())
+      .attr('y', function(key) {
+        return self.y(rankings[self.kwd.kw_index[key]]) - self.y.step(); })
+      .attr('width', function(key) {
+        return self.width; })
+      .attr('opacity', 0.0)
+      // .attr('visibility', 'hidden')
+      .on('mouseenter', function(key) {
+        self.kwd.highlight_kw = key;
+      })
+      .on('mouseleave', function(key) {
+        self.kwd.highlight_kw = null;
+      });
 
     gKeywords.exit().remove();
   }
@@ -760,7 +814,7 @@ const lineView = new LineView('line-view');
 const rankingView = new RankingView('line-view');
 const keywordsView = new KeywordsView('keywords-view');
 const cursorView = new CursorView('line-view');
-d3.json('data.json', function(data) {
+d3.json('word10.json', function(data) {
   const kwd = new KeywordData(data);
   lineView.bindData(kwd);
   rankingView.bindData(kwd);
