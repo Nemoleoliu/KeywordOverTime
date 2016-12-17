@@ -54,7 +54,7 @@ function initFilter(dataset, placeholder, containerName){
   }
 }
 class KeywordData {
-  constructor(data) {
+  constructor() {
     this._timerange = [];
     this._keywords = [];
     this._dates = [];
@@ -950,8 +950,7 @@ $('document').ready(function(){
 
     d3.json(url, function(error, json) {
       if (error) return console.warn(error);
-      data = json;
-      kwd.load(data);
+      kwd.load(json);
     });
   });
   var countries = new Bloodhound({
