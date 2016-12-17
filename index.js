@@ -1,9 +1,63 @@
-margin = {top: 20, right: 30, bottom: 30, left: 50};
+const margin = {top: 20, right: 30, bottom: 30, left: 50};
+// var contentFilter = [];
+// initFilter(contentFilter,"Use content to filter the dataset...", "contentFilter");
 
+function initFilter(dataset, placeholder, containerName){
+  var list = d3.select("#" + containerName).select(".filterList").select("h5");
+  var container = $("#"+containerName);
+  container.find(".filterInput").attr("placeholder", placeholder);
+  container.find(".filterButton").click(
+    function handleClick(event){
+      appendNewValue(container.find(".filterInput.tt-input").val());
+      container.find(".filterInput.tt-input").val("");
+    }
+  )
+
+  function appendNewValue(val){
+    if (dataset.includes(val)) return;
+    dataset.push(val);
+    render();
+  }
+
+  function render(){
+    var listItem = list.selectAll("span")
+            .data(dataset);
+    listItem.enter()
+      .append("span")
+      .attr("class","tag tag-warning")
+      .text(function(d,i){return d;})
+      .on('click', function(d,i){
+        removeItem(d, i);
+      });
+    listItem.exit().remove();
+  }
+
+  function removeItem(name,id){
+    dataset.splice(id, 1);
+    render();
+  }
+
+  function highlight(name,id){
+    list.selectAll("span")
+      .style("background-color", function(d, i){
+        return i == id ? "black": undefined
+      })
+      .style("color", function(d, i){
+        return i == id ? "white": undefined
+      })
+  }
+
+  function unhighlight(){
+    list.selectAll("span")
+      .style("background-color", undefined)
+      .style("color", undefined)
+  }
+}
 class KeywordData {
   constructor(data) {
     this._timerange = [];
     this._keywords = [];
+    this._dates = [];
     this._kw_index = new Map();
     this._date_sum = [];
     this._date_kw = new Map();
@@ -55,15 +109,19 @@ class KeywordData {
     }
     // init color scale
     this._colorScale = d3.scaleOrdinal(d3.schemeCategory20).domain(this._keywords);
+    this._dates = [];
 
     $.each(data.data, function(i, d) {
+      self._dates.push(d.date);
       self._date_kw.set(d.date, d);
-      self._date_sum.push({
-        date: d.date,
-        value: d3.sum(d.values)
-      });
     });
-
+    this._dates.sort();
+    $.each(this._dates, function(i, date) {
+      self._date_sum.push({
+        date: date,
+        value: d3.sum(self._date_kw.get(date).values)
+      });
+    })
     // init kw_date
     $.each(this._keywords, function(i, kw) {
       self._kw_index.set(kw, i);
@@ -72,7 +130,9 @@ class KeywordData {
         values: [],
       });
     });
-    self._date_kw.forEach(function(d, index) {
+
+    $.each(this._dates, function(index, dd) {
+      let d = self._date_kw.get(dd);
       $.each(d.values, function(i, v) {
         self._kw_date[i].values.push({
           date: d.date,
@@ -190,9 +250,9 @@ class KeywordData {
     });
     this._subrange_sum = new Array(this.keywords.length);
     this._subrange_sum.fill(0);
-    this._date_kw.forEach(function(d, date) {
+    $.each(this._dates, function(i, date) {
       if (date >= value[0] && date<= value[1]) {
-        $.each(d.values, function(i, c) {
+        $.each(self._date_kw.get(date).values, function(i, c) {
           self._subrange_sum[i] = self._subrange_sum[i] + c;
         });
       }
@@ -357,7 +417,7 @@ class LineView {
     this.g = this.svg.append("g").attr('class', 'line-view').attr("transform",
       "translate(" + margin.left + "," + margin.top + ")");
     this.clip = this.g.append("defs").append("svg:clipPath")
-      .attr("id", "clip")
+      .attr("id", "clip1")
       .append("svg:rect")
       .attr("id", "clip-rect")
       .attr("x", "0")
@@ -382,7 +442,7 @@ class LineView {
     this.gBrush = this.g.append("g")
       .attr("class", "brush")
       .call(this.brush);
-    this.gLine = this.g.append("g").attr('class', 'gLine').attr("clip-path", "url(#clip)");
+    this.gLine = this.g.append("g").attr('class', 'gLine').attr("clip-path", "url(#clip1)");
     this.x = d3.scaleTime().range([0, this.width]),
     this.y = d3.scaleLinear().range([this.height, 0]),
     this.line = d3.line()
@@ -517,7 +577,7 @@ class RankingView {
       "translate(" + margin.left + "," + margin.top + ")");
 
     this.clip = this.g.append("defs").append("svg:clipPath")
-      .attr("id", "clip")
+      .attr("id", "clip2")
       .append("svg:rect")
       .attr("id", "clip-rect")
       .attr("x", 0)
@@ -525,7 +585,7 @@ class RankingView {
       .attr("width", 0)
       .attr("height", this.height);
 
-    this.gBg = this.g.append('g').attr('class', 'gBg').attr("clip-path", "url(#clip)");
+    this.gBg = this.g.append('g').attr('class', 'gBg').attr("clip-path", "url(#clip2)");
     this.gBg.append('rect')
       .attr('x', 0)
       .attr('y', 0)
@@ -534,8 +594,8 @@ class RankingView {
       .attr('fill','white')
       .style('pointer-events', 'none');
 
-    this.gLines = this.g.append('g').attr('class', 'gLines').attr('clip-path', 'url(#clip)');
-    this.gPoints = this.g.append("g").attr('class', 'gPoints').attr("clip-path", "url(#clip)");
+    this.gLines = this.g.append('g').attr('class', 'gLines').attr('clip-path', 'url(#clip2)');
+    this.gPoints = this.g.append("g").attr('class', 'gPoints').attr("clip-path", "url(#clip2)");
     this.x = d3.scaleTime().range([0, this.width]);
     this.x2 = d3.scaleBand().range([0, this.width]);
     this.y = d3.scalePoint().range([0, this.height]).padding(0.5);
@@ -697,7 +757,7 @@ class KeywordsView {
     this.width = $("#" + id).width();
     this.height = $("#" + id).height();
     this.g = this.svg.append("g").attr('class', 'keywords-view');
-    this.y = d3.scaleBand().range([0, this.height]).padding(1);
+    this.y = d3.scaleBand().range([0, this.height]);
     this.x = d3.scaleLinear().range([0, this.width]);
   }
 
@@ -738,7 +798,7 @@ class KeywordsView {
       .attr('fill', function(key) {
         return self.kwd.colorScale(key); })
       .attr('y', function(key) {
-        return self.y(rankings[self.kwd.kw_index.get(key)]) - self.y.step(); })
+        return self.y(rankings[self.kwd.kw_index.get(key)]); })
       .attr('width', function(key) {
         return self.x(values[self.kwd.kw_index.get(key)]); })
       .attr('opacity', function(key) {
@@ -756,7 +816,7 @@ class KeywordsView {
     gKeywords.merge(gKeywordsEnter).select('rect.keyword-bg')
       .attr('x', 0)
       .attr('y', function(key) {
-        return self.y(rankings[self.kwd.kw_index.get(key)]) - self.y.step(); })
+        return self.y(rankings[self.kwd.kw_index.get(key)]); })
   	  // .attr('rx', r)
   	  // .attr('ry', r)
       .attr('width', self.width)
@@ -778,7 +838,7 @@ class KeywordsView {
       .text(function (key) { return key + " " + values[self.kwd.kw_index.get(key)]; })
       .attr('x', 4)
       .attr('y', function(key) {
-        return self.y(rankings[self.kwd.kw_index.get(key)]) - self.y.step()/2; })
+        return self.y(rankings[self.kwd.kw_index.get(key)]) + self.y.step()/2; })
       .attr('alignment-baseline', 'central')
 	    .attr('text-anchor', 'start')
       .attr('fill','#444444');
@@ -789,7 +849,7 @@ class KeywordsView {
   	  // .attr('ry', r)
       .attr('height', self.y.step())
       .attr('y', function(key) {
-        return self.y(rankings[self.kwd.kw_index.get(key)]) - self.y.step(); })
+        return self.y(rankings[self.kwd.kw_index.get(key)]); })
       .attr('width', function(key) {
         return self.width; })
       .attr('opacity', 0.0)
@@ -822,138 +882,90 @@ d3.selection.prototype.moveToBack = function() {
     });
 };
 
-
-const navView = new NavigationView('navigation-view');
-const lineView = new LineView('line-view');
-const rankingView = new RankingView('line-view');
-const keywordsView = new KeywordsView('keywords-view');
-const cursorView = new CursorView('line-view');
-const kwd = new KeywordData();
-lineView.bindData(kwd);
-rankingView.bindData(kwd);
-navView.bindData(kwd);
-keywordsView.bindData(kwd);
-cursorView.bindData(kwd);
-kwd.subrangeDidUpdate = function() {
-  rankingView.update();
-  lineView.update();
-};
-kwd.visibleRangeDidUpdate = function() {
-  rankingView.updateVisible();
-  lineView.updateVisible();
-};
-kwd.highlightDidUpdate = function() {
-  rankingView.update();
-  lineView.update();
-  keywordsView.update();
-};
-kwd.cursorDidUpdate = function() {
-  keywordsView.update();
-};
-kwd.dataDidLoad = function() {
-  lineView.update();
-  rankingView.update();
-  navView.update();
-  keywordsView.update();
-  cursorView.update();
-}
-lineView.brushDidRefresh = function(d) {
-  if (d[0] == d[1]) {
+$('document').ready(function(){
+  const keywordFilter = [];
+  initFilter(keywordFilter,"Use keywords to filter the dataset...", "keywordFilter");
+  const navView = new NavigationView('navigation-view');
+  const lineView = new LineView('line-view');
+  const rankingView = new RankingView('line-view');
+  const keywordsView = new KeywordsView('keywords-view');
+  const cursorView = new CursorView('line-view');
+  const kwd = new KeywordData();
+  lineView.bindData(kwd);
+  rankingView.bindData(kwd);
+  navView.bindData(kwd);
+  keywordsView.bindData(kwd);
+  cursorView.bindData(kwd);
+  kwd.subrangeDidUpdate = function() {
+    rankingView.update();
+    lineView.update();
+  };
+  kwd.visibleRangeDidUpdate = function() {
+    rankingView.updateVisible();
+    lineView.updateVisible();
+  };
+  kwd.highlightDidUpdate = function() {
+    rankingView.update();
+    lineView.update();
+    keywordsView.update();
+  };
+  kwd.cursorDidUpdate = function() {
+    keywordsView.update();
+  };
+  kwd.dataDidLoad = function() {
+    lineView.update();
+    rankingView.update();
+    navView.update();
+    keywordsView.update();
+    cursorView.update();
+  }
+  lineView.brushDidRefresh = function(d) {
+    if (d[0] == d[1]) {
+      kwd.visible_ranking_range = null;
+    } else {
+      kwd.visible_ranking_range =[d[0], d[1] - d[0]];
+    }
+  };
+  navView.brushDidRefresh = function(d) {
+    kwd.subrange = d;
     kwd.visible_ranking_range = null;
-  } else {
-    kwd.visible_ranking_range =[d[0], d[1] - d[0]];
-  }
-};
-navView.brushDidRefresh = function(d) {
-  kwd.subrange = d;
-  kwd.visible_ranking_range = null;
-};
+  };
 
-d3.json('word10.json', function(data) {
-  kwd.load(data);
-})
-
-$("#submit_btn").click(function(){
-  d3.json("http://127.0.0.1:5000/data?timeunit=600000&keywords=love,kiss,internet,video,image", function(error, json) {
-    if (error) return console.warn(error);
-    data = json;
+  d3.json('word10.json', function(data) {
     kwd.load(data);
+  })
+
+  $("#submit_btn").click(function(){
+    let timeunit = $('#timeunit').val() * 1000;
+    if (timeunit <= 0) return;
+    let sep = '';
+    let keywords = '';
+    $.each(keywordFilter, function(i, d) {
+      keywords = keywords+sep+d;
+      sep = ',';
+    });
+    let url = 'http://127.0.0.1:5000/data?';
+    url = url + 'timeunit=' + timeunit +'&';
+    url = url + 'keywords=' + keywords;
+
+    d3.json(url, function(error, json) {
+      if (error) return console.warn(error);
+      data = json;
+      kwd.load(data);
+    });
   });
-  // $.ajax({
-  //   cache: false,
-  //   url: "http://127.0.0.1:5000/data",
-  //   dataType: 'json',
-  //   type: "get", //send it through get method
-  //   data:{timeunit:600000, keywords:'love,kiss,internet,video,image'},
-  //   success: function(response) {
-  //     kwd.load(response);
-  //   },
-  //   error: function(xhr) {
-  //     //Do Something to handle error
-  //     console.log(xhr)
-  //   }
-  // });
+  var countries = new Bloodhound({
+      datumTokenizer: Bloodhound.tokenizers.whitespace,
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      // The url points to a json file that contains an array of country names
+      prefetch: '../typeahead'
+  });
+
+  // Initializing the typeahead with remote dataset
+  $('.typeahead').typeahead(null, {
+      name: 'countries',
+      source: countries,
+      limit: 10 /* Specify maximum number of suggestions to be displayed */
+  });
+
 });
-var keywordFilter = [];
-var contentFilter = [];
-initFilter(keywordFilter,"Use keywords to filter the dataset...", "keywordFilter");
-
-initFilter(contentFilter,"Use content to filter the dataset...", "contentFilter");
-function initFilter(dataset, placeholder, containerName)
-{
-  var list = d3.select("#" + containerName)
-         .select(".filterList")
-         .select("h4");
-  var container = $("#"+containerName);
-  container.find(".filterInput").attr("placeholder", placeholder);
-
-  container.find(".filterButton").click(
-   function handleClick(event){
-    appendNewValue(container.find(".filterInput").val());
-    container.find(".filterInput").val("");
-
-  }
-  )
-  function appendNewValue(val){
-
-    dataset.push(val);
-    render();
-  }
-  function render()
-  {
-    var listItem = list.selectAll("span")
-            .data(dataset);
-    listItem.enter()
-      .append("span")
-      .attr("class","label label-warning")
-      .text(function(d,i){return d;})
-      .on('click', function(d,i){
-        removeItem(d, i);
-      });
-    listItem.exit()
-      .remove("span");
-
-  }
-  function removeItem(name,id)
-  {
-    dataset.splice(id, 1);
-    render();
-  }
-  function highlight(name,id)
-  {
-    list.selectAll("span")
-      .style("background-color", function(d, i){
-        return i == id ? "black": undefined
-      })
-      .style("color", function(d, i){
-        return i == id ? "white": undefined
-      })
-  }
-  function unhighlight()
-  {
-
-    list.selectAll("span")
-      .style("background-color", undefined)
-      .style("color", undefined)
-  }
-}

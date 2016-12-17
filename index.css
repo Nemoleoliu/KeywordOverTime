@@ -27,8 +27,8 @@ body {
   height: 100%;
 }
 
-.sidebar-left, .sidebar-right {
- /* background-color: #dddddd; */
+.sidebar-left {
+  padding-top: 10px;
 }
 
 .main {
@@ -104,15 +104,20 @@ path.brush ,
   stroke-width: 6px;
 }
 
-.filter {
-  margin-top: 10px;
-}
 
 .filterList{
   margin-top: 10px;
 }
 
-span.label{
+span.tag{
   display: inline-block;
   margin: 2px
+}
+
+.card-block{
+  padding: 1em;
+}
+
+.title {
+  margin-top: 10px;
 }

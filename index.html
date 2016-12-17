@@ -3,69 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Keyword Over Time Visualization</title>
   <script
   src="https://code.jquery.com/jquery-3.1.1.min.js"
   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
   crossorigin="anonymous"></script>
   <script src="//d3js.org/d3.v4.min.js"></script>
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-  <!-- Optional theme -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
-  <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+  <script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css" integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/js/bootstrap.min.js" integrity="sha384-BLiI7JTZm+JWlgKa0M0kGRpJbF2J8q+qreVrKBC47e3K6BW78kGLrCkeRX6I9RoK" crossorigin="anonymous"></script>
+  <script src="../typeahead.bundle.min.js"></script>
   <link rel="stylesheet" href="index.css"/>
+  <link rel="stylesheet" href="typeahead.js-bootstrap.css"/>
+
 </head>
 <body>
   <div class="row clear container">
     <div class="col-md-2 sidebar-left">
-      <div>
-        Document filter
-      </div>
-      <div class="input-group">
-        <span class="input-group-addon" id="basic-addon1">Timeunit (ms)</span>
-        <input type="text" class="form-control" placeholder="" aria-describedby="basic-addon1">
-      </div>
-      <div class="filter" id ="contentFilter">
-        <div class="input-group">
-          <input class = "form-control filterInput" type="text" placeholder="">
-
-          <span class="input-group-btn">
-            <button class="btn btn-info filterButton" name="Submit" type="submit" >
-              Add
-            </button>
-          </span>
+      <div class="card">
+        <div class="card-header">
+          Document filter
         </div>
-        <div class = "filterList" >
-          <h4>
-          </h4>
+        <div class="card-block">
+          <label for="timeunit">Timeunit (s)</label>
+          <input id="timeunit" type="number" class="form-control" placeholder="" aria-describedby="basic-addon1">
+          <label for="keywordFilter">Keywords</label>
+          <div class="filter" id ="keywordFilter">
+            <div class="input-group">
+              <input type="text" class="form-control filterInput typeahead" placeholder="Search for...">
+              <span class="input-group-btn">
+                <button class="btn btn-secondary filterButton" type="button">+</button>
+              </span>
+            </div>
+            <div class = "filterList" ><h5></h5></div>
+          </div>
+          <button type="button" class="btn btn-primary" id="submit_btn">Submit</button>
         </div>
       </div>
-      <div>
-        Keywords
-      </div>
-      <div class="filter" id ="keywordFilter">
-        <div class="input-group">
-          <input class = "form-control filterInput" type="text" placeholder="Add some keywords to filter the dataset...">
-
-          <span class="input-group-btn">
-            <button class="btn btn-info filterButton" name="Submit" type="submit" >
-              Add
-            </button>
-          </span>
-        </div>
-        <div class = "filterList" >
-          <h4>
-          </h4>
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary" id="submit_btn">Primary</button>
     </div>
     <div class="col-md-8 content clear">
       <div class="main">

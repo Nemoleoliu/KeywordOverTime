@@ -15,6 +15,7 @@ mysql = MySQL(app)
 rv0 = None
 rv1 = None
 kw_dict = None
+keywords = None
 start_time = 1481787937000
 end_time = 1481827066000
 
@@ -23,12 +24,12 @@ def _run_on_start():
     global rv0
     global rv1
     global kw_dict
+    global keywords
     cur = mysql.connection.cursor()
     cur.execute('SELECT * FROM tweets0 WHERE date>={0} and date<={1}'.format(start_time, end_time))
     rv0 = cur.fetchall()
     cur.execute('SELECT * FROM tweets1 WHERE date>={0} and date<={1}'.format(start_time, end_time))
     rv1 = cur.fetchall()
-    keywords = None
     with open('keywords.json') as keywords_file:
         keywords = json.load(keywords_file)
 
@@ -36,6 +37,10 @@ def _run_on_start():
     for i in range(len(keywords)):
         kw_dict[keywords[i]] = i
 
+
+@app.route('/typeahead')
+def typeahead():
+    return json.dumps(keywords);
 
 @app.route('/')
 def index():
