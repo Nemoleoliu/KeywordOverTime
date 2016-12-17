@@ -814,7 +814,7 @@ const lineView = new LineView('line-view');
 const rankingView = new RankingView('line-view');
 const keywordsView = new KeywordsView('keywords-view');
 const cursorView = new CursorView('line-view');
-d3.json('word10.json', function(data) {
+function init(data) {
   const kwd = new KeywordData(data);
   lineView.bindData(kwd);
   rankingView.bindData(kwd);
@@ -848,4 +848,87 @@ d3.json('word10.json', function(data) {
     kwd.subrange = d;
     kwd.visible_ranking_range = null;
   };
+}
+d3.json('word10.json', function(data) {
+  init(data);
 })
+
+$("#submit_btn").click(function(){
+  $.ajax({
+    url: "http://localhost:5000/data",
+    dataType: 'json',
+    type: "get", //send it through get method
+    data:{timeunit:600000, keywords:'love,kiss'},
+    success: function(response) {
+      init(response);
+      //Do Something
+    },
+    error: function(xhr) {
+      //Do Something to handle error
+      console.log(xhr)
+    }
+  });
+});
+var keywordFilter = [];
+var contentFilter = [];
+initFilter(keywordFilter,"Use keywords to filter the dataset...", "keywordFilter");
+
+initFilter(contentFilter,"Use content to filter the dataset...", "contentFilter");
+function initFilter(dataset, placeholder, containerName)
+{
+  var list = d3.select("#" + containerName)
+         .select(".filterList")
+         .select("h4");
+  var container = $("#"+containerName);
+  container.find(".filterInput").attr("placeholder", placeholder);
+
+  container.find(".filterButton").click(
+   function handleClick(event){
+    appendNewValue(container.find(".filterInput").val());
+    container.find(".filterInput").val("");
+
+  }
+  )
+  function appendNewValue(val){
+
+    dataset.push(val);
+    render();
+  }
+  function render()
+  {
+    var listItem = list.selectAll("span")
+            .data(dataset);
+    listItem.enter()
+      .append("span")
+      .attr("class","label label-warning")
+      .text(function(d,i){return d;})
+      .on('click', function(d,i){
+        removeItem(d, i);
+      });
+    listItem.exit()
+      .remove("span");
+
+  }
+  function removeItem(name,id)
+  {
+    dataset.splice(id, 1);
+    render();
+  }
+  function highlight(name,id)
+  {
+    list.selectAll("span")
+      .style("background-color", function(d, i){
+        return i == id ? "black": undefined
+      })
+      .style("color", function(d, i){
+        return i == id ? "white": undefined
+      })
+  }
+  function unhighlight()
+  {
+
+    list.selectAll("span")
+      .style("background-color", undefined)
+      .style("color", undefined)
+  }
+}

@@ -103,3 +103,16 @@ path.brush ,
   opacity: 1;
   stroke-width: 6px;
 }
+
+.filter {
+  margin-top: 10px;
+}
+
+.filterList{
+  margin-top: 10px;
+}
+
+span.label{
+  display: inline-block;
+  margin: 2px
+}
