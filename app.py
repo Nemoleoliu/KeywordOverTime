@@ -12,20 +12,46 @@ app.config['MYSQL_DB'] = 'kw_db'
 app.config['MYSQL_HOST'] = 'localhost'
 mysql = MySQL(app)
 
-keywords = None
-with open('keywords.json') as keywords_file:
-    keywords = json.load(keywords_file)
+rv0 = None
+rv1 = None
+kw_dict = None
+start_time = 1481787937000
+end_time = 1481827066000
 
-kw_dict = {}
-for i in range(len(keywords)):
-    kw_dict[keywords[i]] = i
+@app.before_first_request
+def _run_on_start():
+    global rv0
+    global rv1
+    global kw_dict
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM tweets0 WHERE date>={0} and date<={1}'.format(start_time, end_time))
+    rv0 = cur.fetchall()
+    cur.execute('SELECT * FROM tweets1 WHERE date>={0} and date<={1}'.format(start_time, end_time))
+    rv1 = cur.fetchall()
+    keywords = None
+    with open('keywords.json') as keywords_file:
+        keywords = json.load(keywords_file)
+
+    kw_dict = {}
+    for i in range(len(keywords)):
+        kw_dict[keywords[i]] = i
+
 
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/test')
+def test():
+    return app.send_static_file('test.html')
+
 @app.route('/data', methods=['GET',])
 def data():
+    global rv0
+    global rv1
+    global kw_dict
+    global start_time
+    global end_time
     timeunit = int(request.args.get('timeunit', ''))
     keywordfilter = request.args.get('keywordfilter', '')
     keywords = request.args.get('keywords', '').split(',')
@@ -35,21 +61,15 @@ def data():
         if kw_dict.has_key(k):
             keywords_validated.append(k)
             kw.append(kw_dict[k])
-    start_time = 1481787937000
-    end_time = 1481827066000
-    start_time = start_time - start_time%timeunit
-    end_time = end_time - end_time%timeunit + timeunit
+
+    s_time = start_time - start_time%timeunit
+    e_time = end_time - end_time%timeunit + (0 if end_time%timeunit==0 else timeunit)
 
     if keywordfilter is '':
         filters = []
     else :
         filters = keywordfilter.split(',')
 
-    cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM tweets0 WHERE date>={0} and date<={1}'.format(start_time, end_time))
-    rv0 = cur.fetchall()
-    cur.execute('SELECT * FROM tweets1 WHERE date>={0} and date<={1}'.format(start_time, end_time))
-    rv1 = cur.fetchall()
     result = {}
     for j in range(len(rv0)):
         d0 = rv0[j]
@@ -70,7 +90,7 @@ def data():
 
     return json.dumps({
         'keywords': keywords_validated,
-        'timerange': [start_time, end_time],
+        'timerange': [s_time, e_time],
         'timeunit': timeunit,
         'data': ret,
     })
