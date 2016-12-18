@@ -944,7 +944,7 @@ $('document').ready(function(){
       keywords = keywords+sep+d;
       sep = ',';
     });
-    let url = 'http://127.0.0.1:5000/data?';
+    let url = 'http://ec2-54-213-195-6.us-west-2.compute.amazonaws.com/data?';
     url = url + 'timeunit=' + timeunit +'&';
     url = url + 'keywords=' + keywords;
 
