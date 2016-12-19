@@ -792,8 +792,8 @@ class KeywordsView {
     gKeywordsEnter.append('rect').attr('class', 'keyword-action');
    	gKeywords.merge(gKeywordsEnter).select('rect.keyword-bar')
       .attr('x', 0)
-  	  // .attr('rx', r)
-  	  // .attr('ry', r)
+  	  .attr('rx', r)
+  	  .attr('ry', r)
       .attr('height', self.y.step())
       .attr('fill', function(key) {
         return self.kwd.colorScale(key); })
@@ -817,8 +817,8 @@ class KeywordsView {
       .attr('x', 0)
       .attr('y', function(key) {
         return self.y(rankings[self.kwd.kw_index.get(key)]); })
-  	  // .attr('rx', r)
-  	  // .attr('ry', r)
+  	  .attr('rx', r)
+  	  .attr('ry', r)
       .attr('width', self.width)
       .attr('height', self.y.step())
       .attr('fill', function(key) { return self.kwd.colorScale(key); })
@@ -845,8 +845,6 @@ class KeywordsView {
 
     gKeywords.merge(gKeywordsEnter).select('rect.keyword-action')
       .attr('x', 0)
-  	  // .attr('rx', r)
-  	  // .attr('ry', r)
       .attr('height', self.y.step())
       .attr('y', function(key) {
         return self.y(rankings[self.kwd.kw_index.get(key)]); })
