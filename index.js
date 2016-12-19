@@ -22,18 +22,18 @@ function initFilter(dataset, placeholder, containerName){
   function render(){
     var listItem = list.selectAll("span")
             .data(dataset);
-    listItem.enter()
+    var listItemEnter = listItem.enter()
       .append("span")
       .attr("class","tag tag-warning")
-      .text(function(d,i){return d;})
       .on('click', function(d,i){
-        removeItem(d, i);
+        removeItem(d);
       });
+    listItem.merge(listItemEnter).text(function(d,i){return d;});
     listItem.exit().remove();
   }
 
-  function removeItem(name,id){
-    dataset.splice(id, 1);
+  function removeItem(key){
+    dataset.splice(dataset.indexOf(key), 1);
     render();
   }
 
@@ -147,7 +147,8 @@ class KeywordData {
         values: [],
       });
     });
-    self._date_kw.forEach(function(d, index) {
+    $.each(this._dates, function(index, date) {
+      let d = self._date_kw.get(date);
       const len = d.values.length;
       const indices = new Array(len);
       const indexes = new Array(len);
@@ -161,18 +162,17 @@ class KeywordData {
       $.each(indices, function(i, v) {
         rankings[indices[i]] = i;
       });
-      self._date_kw_ranking.set(d.date, {
-        date: d.date,
+      self._date_kw_ranking.set(date, {
+        date: date,
         values: rankings
       });
       let rank = 0;
       $.each(indices, function(i, v) {
         self._kw_date_ranking[v].values.push({
-          date: d.date,
+          date: date,
           value: i,
         });
       });
-
     });
     this._highlight_kw = null;
     this.subrange = null;
