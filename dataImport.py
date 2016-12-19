@@ -25,9 +25,12 @@ for x in range(1496/2):
 command = command +')'
 db.query(command)
 
-with open('kwall.json') as data_file:
+with open('36h.json') as data_file:
     data = json.load(data_file)
-    id = 1
+    command = 'SELECT MAX(id) FROM tweets0';
+    db.query(command)
+    r = db.store_result()
+    id = int(r.fetch_row()[0][0]) + 1
     for d in data['data']:
         command = 'INSERT INTO tweets0 VALUES('
         values = d['values'][0:748]
@@ -46,6 +49,6 @@ with open('kwall.json') as data_file:
         for v in values:
             command = command +','+str(v)
         command = command +')'
-        print command
+        # print command
         db.query(command)
         id += 1
