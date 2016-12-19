@@ -16,8 +16,10 @@ rv0 = None
 rv1 = None
 kw_dict = None
 keywords = None
-start_time = 1481787937000
-end_time = 1481827066000
+# start_time = 1481787937000
+# end_time = 1481827066000
+start_time = 1482036060000
+end_time = 1482171420000
 
 @app.before_first_request
 def _run_on_start():
