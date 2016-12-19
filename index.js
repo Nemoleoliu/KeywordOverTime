@@ -767,7 +767,7 @@ class KeywordsView {
   }
 
   renderKeywords() {
-    const r = 4;
+    const r = 8;
     const self = this;
     let values = null;
     let rankings = null;
